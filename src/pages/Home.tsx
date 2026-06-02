@@ -1,15 +1,20 @@
-import { AlertCircle, Loader2, PenLine, Wand2 } from "lucide-react";
+import { AlertCircle, FileScan, Loader2, PenLine, Wand2 } from "lucide-react";
 import * as React from "react";
 
 import { ImageUpload } from "@/components/ImageUpload";
+import { PageOcr } from "@/components/PageOcr";
 import { PredictableWords } from "@/components/PredictableWords";
 import { PredictionResult } from "@/components/PredictionResult";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { usePrediction } from "@/hooks/usePrediction";
 
+type Mode = "word" | "page";
+
 export function Home() {
+  const [mode, setMode] = React.useState<Mode>("word");
   const [file, setFile] = React.useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
   const [localError, setLocalError] = React.useState<string | null>(null);
@@ -59,12 +64,36 @@ export function Home() {
             <span className="text-primary">Armenian words</span>
           </h1>
           <p className="mt-4 text-pretty text-muted-foreground">
-            Upload an image of a single handwritten Armenian word and the model
-            will predict it from a fixed set of Armenian words, with a
-            confidence score.
+            Recognize a single handwritten Armenian word, or scan a whole page —
+            a detector finds each word and the model labels it from a fixed set
+            of Armenian words.
           </p>
         </section>
 
+        {/* Mode toggle */}
+        <div className="mx-auto mb-8 flex w-fit items-center gap-1 rounded-lg border bg-muted/40 p-1">
+          {([
+            { key: "word", label: "Single word", icon: Wand2 },
+            { key: "page", label: "Full page", icon: FileScan },
+          ] as const).map(({ key, label, icon: Icon }) => (
+            <button
+              key={key}
+              onClick={() => setMode(key)}
+              className={cn(
+                "flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors",
+                mode === key
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <Icon className="h-4 w-4" /> {label}
+            </button>
+          ))}
+        </div>
+
+        {mode === "page" && <PageOcr />}
+
+        {mode === "word" && (
         <div className="grid gap-6 md:grid-cols-2">
           <Card>
             <CardContent className="space-y-5 pt-6">
@@ -127,9 +156,10 @@ export function Home() {
             )}
           </div>
         </div>
+        )}
 
         <div className="mt-6">
-          <PredictableWords highlight={result?.prediction} />
+          <PredictableWords highlight={mode === "word" ? result?.prediction : undefined} />
         </div>
       </main>
 

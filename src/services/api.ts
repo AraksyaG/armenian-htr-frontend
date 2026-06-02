@@ -2,6 +2,7 @@ import {
   ApiError,
   type ClassesResponse,
   type HealthResponse,
+  type OcrResponse,
   type PredictionResponse,
 } from "@/types";
 
@@ -74,6 +75,21 @@ export async function checkHealth(): Promise<HealthResponse> {
     if (!response.ok) await parseError(response);
     return (await response.json()) as HealthResponse;
   }, 8_000);
+}
+
+/** Full-page OCR: detect every word and recognize each. */
+export async function ocrImage(file: File): Promise<OcrResponse> {
+  return withTimeout(async (signal) => {
+    const form = new FormData();
+    form.append("image", file);
+    const response = await fetch(`${API_URL}/ocr`, {
+      method: "POST",
+      body: form,
+      signal,
+    });
+    if (!response.ok) await parseError(response);
+    return (await response.json()) as OcrResponse;
+  }, 60_000);
 }
 
 /** Fetch the closed vocabulary the model can predict. */
